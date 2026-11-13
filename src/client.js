@@ -4,7 +4,9 @@ import { BACKUP } from "./server.js";
 
 // Snapshots arrive on the unordered fast channel: accept(tick) is true only for one newer than any
 // before (counting the ones skipped as lost), keep(state) remembers it as a baseline the host may
-// delta against, get(tick) finds one. `lastTick` is what to acknowledge.
+// delta against, get(tick) finds one. `lastTick` is what to acknowledge. Ticks don't wrap (send
+// them as u32), and when the host starts its ticks over (createSnapshots' reset, a new round) call
+// reset() here too, or every snapshot is turned away until the ticks pass the old ones.
 export function createReceiver({ backup = BACKUP, stats = null } = {}) {
 	const states = new Map();
 	let lastTick = 0;

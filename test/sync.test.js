@@ -271,11 +271,27 @@ test("command gates run each command once, in order, within the time budget", as
 	assert.strictEqual(gate.budget, server.MAX_BUDGET);
 	assert.strictEqual(server.admitCmds(gate, [cmd(7), cmd(7)]).length, 1);
 	server.resetGate(gate);
-	assert.strictEqual(gate.lastSeq, 0);
+	assert.strictEqual(gate.lastSeq, null);
 	// Wrapping numbers.
 	const wrap = server.createCmdGate({ seqBits: 8 });
 	wrap.lastSeq = 254;
 	assert.deepStrictEqual(server.admitCmds(wrap, [cmd(1), cmd(255), cmd(0)]).map(c => c.seq), [255, 0, 1]);
+});
+
+test("command gates take the first command whatever its number, after a reset too", async() => {
+	const { server } = await load();
+	const cmd = seq => ({ seq, msec: 16 });
+	// A predictor's numbers carry on across rounds: past half the wrap, a gate reset to 0 would
+	// take nothing newer for minutes.
+	const gate = server.createCmdGate({ seqBits: 16 });
+	assert.deepStrictEqual(server.admitCmds(gate, [cmd(40000)]).map(c => c.seq), [40000]);
+	server.resetGate(gate);
+	assert.deepStrictEqual(server.admitCmds(gate, [cmd(40001), cmd(40002)]).map(c => c.seq), [40001, 40002]);
+	// A page that came back numbers from 1 again.
+	server.resetGate(gate);
+	server.refillGate(gate, 1);
+	assert.deepStrictEqual(server.admitCmds(gate, [cmd(1), cmd(2)]).map(c => c.seq), [1, 2]);
+	assert.deepStrictEqual(server.admitCmds(gate, [cmd(2)]), [], "and repeats are still skipped");
 });
 
 test("snapshots: deltas against what each guest acknowledged, never ahead of what was sent", async() => {

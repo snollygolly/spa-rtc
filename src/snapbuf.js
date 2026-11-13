@@ -28,6 +28,8 @@ export function clockSample(clock, serverTime, localTime) {
 	else clock.offset += (sample - clock.offset) * CLOCK_PULL;
 }
 
+// The host's present on the guest's clock; 0 until the first sample. A host drawing its own guests
+// through a buffer is its own server: clockSample(clock, t, t) once, or use its own time.
 export function serverNow(clock, localTime) {
 	return clock.offset === null ? 0 : localTime + clock.offset;
 }

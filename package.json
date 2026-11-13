@@ -1,6 +1,6 @@
 {
   "name": "spa-rtc",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Peer-to-peer multiplayer for static browser games on spa-hub: WebRTC transports, rooms with late join and rejoin, and a netcode kit (prediction, interpolation, delta snapshots, lag compensation).",
   "engines": {
     "node": ">=22.8"

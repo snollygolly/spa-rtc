@@ -10,9 +10,11 @@ export const BACKUP = 32;
 // Seconds of commands a guest may bank (covers a burst after a stall, not a speed hack).
 export const MAX_BUDGET = 0.25;
 
-// One guest's gate: the last command it ran and how much time it may still spend.
+// One guest's gate: the last command it ran (null until the first, which is taken whatever its
+// number, so a page that starts over at 1, or a predictor whose numbers carried on past a reset,
+// is never shut out) and how much time it may still spend.
 export function createCmdGate({ maxBudget = MAX_BUDGET, seqBits = null } = {}) {
-	return { lastSeq: 0, budget: maxBudget / 2, maxBudget, seqBits };
+	return { lastSeq: null, budget: maxBudget / 2, maxBudget, seqBits };
 }
 
 // The commands in a packet to run now: newer than the last one run, oldest first, each paid for
@@ -26,7 +28,7 @@ export function admitCmds(gate, cmds, msecOf = c => c.msec) {
 	});
 	const out = [];
 	for (const cmd of sorted) {
-		if (!newer(cmd.seq, gate.lastSeq)) continue;
+		if (gate.lastSeq !== null && !newer(cmd.seq, gate.lastSeq)) continue;
 		gate.lastSeq = cmd.seq;
 		const cost = Math.max(0, msecOf(cmd)) / 1000;
 		if (cost > gate.budget) continue;
@@ -41,9 +43,9 @@ export function refillGate(gate, dt) {
 	gate.budget = Math.min(gate.maxBudget, gate.budget + dt);
 }
 
-// A new round: commands start over.
+// A new round, or the guest's page came back: the next command is taken whatever its number.
 export function resetGate(gate) {
-	gate.lastSeq = 0;
+	gate.lastSeq = null;
 	gate.budget = gate.maxBudget / 2;
 }
 

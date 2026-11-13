@@ -65,7 +65,7 @@ room.leave();
 ```
 
 - **Late join.** A guest who joins while a round is on receives the roster first, then the round's `start` data, before the host's `joined(player)` runs. Anything the host sends from `joined` (the current score, a full state) arrives after that.
-- **Rejoin.** A guest who comes back with the same seat token (after a reload, a dropped link or a closed tab) gets `joined(player, { rejoinOf: oldId })`, so the game can hand back their score, team or role. If the host hasn't yet noticed the old connection drop, the stale player is removed first (`left(oldId)`).
+- **Rejoin.** A guest who comes back with the same seat token (after a reload or a dropped link, in the same tab: the token lives in sessionStorage, so a closed tab or another device is someone new) gets `joined(player, { rejoinOf: oldId })`, so the game can hand back their score, team or role. If the host hasn't yet noticed the old connection drop, the stale player is removed first (`left(oldId)`).
 - **Silence.** The host drops a guest it hasn't heard from in `silenceMs`. A guest gives up on a silent host with `closed("timeout")`.
 - **Host leaving.** The room closes with `closed("host_left")`, unless `followHost` is on: then the oldest guest becomes host (`hostChanged`), keeps the roster and the round, and the rest reconnect and are brought up to date.
 - **Messages.** Use `reliable` for JSON and `fast` for strings or binary, as is. The host only accepts game messages from seated guests, and a guest only from its host.
